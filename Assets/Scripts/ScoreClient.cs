@@ -9,6 +9,7 @@ public class ScoreClient : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
+
         _gameManager = GameObject.FindWithTag(GameManager.Tag).GetComponent<GameManager>();
     }
 

@@ -23,11 +23,12 @@ public class EnemyController : MonoBehaviour
     private Rigidbody _rigidbody;
     private RigidbodyLookRotation _rigidbodyLookRotation;
     private Vector3 _aimDirection;
-    
+
     // It often makes sense to treat NPCs as "state machines", whereby a
     // coroutine switches this state over time, but there also are
     // frame-by-frame updates based on this state.
-    private enum EnemyState {
+    private enum EnemyState
+    {
         Idle,
         Attack
     }
@@ -59,7 +60,7 @@ public class EnemyController : MonoBehaviour
             // Aim at player while in attack state.
             var target = this._player.transform.position;
             this._aimDirection = (target - transform.position).normalized;
-            
+
             // Upwards "thrust" to make state change more evident.
             this._rigidbody.AddForce(
                 Vector3.up * this.attackStateThrustForce, ForceMode.Force);
@@ -82,11 +83,11 @@ public class EnemyController : MonoBehaviour
     private IEnumerator Attack()
     {
         this._state = EnemyState.Attack;
-        
+
         // Allow for a bit of "aim time" to give player notice. Subtle
         // parameters like this can be varied to change opponent difficulty. 
         yield return new WaitForSeconds(this.aimTime);
-        
+
         // Lunge upwards before firing.
         yield return Lunge(Vector3.up * this.attackLungeImpulse);
         yield return Fire();
@@ -110,7 +111,7 @@ public class EnemyController : MonoBehaviour
     private IEnumerator Idle()
     {
         this._state = EnemyState.Idle;
-        
+
         yield return new WaitForSeconds(
             Random.Range(this.minIdleTime, this.maxIdleTime));
     }
@@ -119,11 +120,11 @@ public class EnemyController : MonoBehaviour
     {
         Instantiate(this.projectilePrefab, transform.position, Quaternion.identity)
             .SetVelocity(this._aimDirection * this.projectileSpeed);
-        
+
         // Recoil impulse
         this._rigidbody.AddForce(
             -this._aimDirection * this.projectileSpeed, ForceMode.Impulse);
-        
+
         yield return new WaitForSeconds(0.5f); // Small delay after fire.
     }
 }

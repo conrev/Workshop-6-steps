@@ -2,7 +2,10 @@
 // (c) University of Melbourne, 2022
 
 using System.Collections;
+using System.Linq;
+using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Events;
 
 public class SwarmManager : MonoBehaviour
 {
@@ -16,7 +19,10 @@ public class SwarmManager : MonoBehaviour
     [SerializeField] private float stepTime;
     [SerializeField] private float leftBoundaryX;
     [SerializeField] private float rightBoundaryX;
-
+    [SerializeField] private UnityEvent onSwarmSpawned;
+    [SerializeField] private UnityEvent onSwarmReady;
+    [SerializeField] private UnityEvent onSwarmDefeated;
+    private List<GameObject> _waveEnemies = new();
     private int _direction = 1; // Start moving to the right (positive x)
 
     private void Start()
@@ -33,16 +39,25 @@ public class SwarmManager : MonoBehaviour
     private IEnumerator AttackSequence()
     {
         yield return GenerateSwarm();
+        onSwarmSpawned.Invoke();
+        yield return new WaitForSeconds(1.0f);
+        onSwarmReady.Invoke();
         yield return StepSwarmPeriodically();
     }
 
     private IEnumerator StepSwarmPeriodically()
     {
-        while (true)
+        while (EnemyStillAlive())
         {
             yield return new WaitForSeconds(this.stepTime); // Not blocking!
             StepSwarm();
         }
+        onSwarmDefeated.Invoke();
+    }
+
+    private bool EnemyStillAlive()
+    {
+        return this._waveEnemies.Any(enemy => enemy != null);
     }
 
     // Automatically generate swarm of enemies based on the given serialized
@@ -52,23 +67,25 @@ public class SwarmManager : MonoBehaviour
     {
         // Create swarm of enemies in a grid formation
         for (var col = 0; col < this.enemyCols; col++)
-        for (var row = 0; row < this.enemyRows; row++)
-        {
-            var offset = new Vector3(col, 0.0f, row) * this.enemySpacing;
-            var spawnPosition = transform.position +
-                                new Vector3(offset.x, 0.0f, 13.0f);
-            var enemy = Instantiate(
-                this.enemyTemplate, spawnPosition, 
-                this.enemyTemplate.transform.rotation); // Use prefab rotation
+            for (var row = 0; row < this.enemyRows; row++)
+            {
+                var offset = new Vector3(col, 0.0f, row) * this.enemySpacing;
+                var spawnPosition = transform.position +
+                                    new Vector3(offset.x, 0.0f, 13.0f);
+                var enemy = Instantiate(
+                    this.enemyTemplate, spawnPosition,
+                    this.enemyTemplate.transform.rotation); // Use prefab rotation
 
-            var enemySlot = Instantiate(this.enemySlotTemplate);
-            enemySlot.SetSwarm(this, offset);
-            enemySlot.SetEnemy(enemy.GetComponent<Rigidbody>());
+                var enemySlot = Instantiate(this.enemySlotTemplate);
+                enemySlot.SetSwarm(this, offset);
+                enemySlot.SetEnemy(enemy.GetComponent<Rigidbody>());
 
-            // A short delay between spawning each enemy allows us to create a
-            // sequential "fly in" of enemies to their slot positions. 
-            yield return new WaitForSeconds(0.03f);
-        }
+                this._waveEnemies.Add(enemy);
+                // A short delay between spawning each enemy allows us to create a
+                // sequential "fly in" of enemies to their slot positions. 
+                yield return new WaitForSeconds(0.03f);
+            }
+
     }
 
     // Step the swarm across the screen, based on the current direction, or down

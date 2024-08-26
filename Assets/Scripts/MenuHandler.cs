@@ -8,9 +8,17 @@ public class MenuHandler : MonoBehaviour
     // Start is called before the first frame update
     [SerializeField] private GameObject landingUI;
     [SerializeField] private GameObject InstructionUI;
+    [SerializeField] private TMPro.TMP_Text scoreText;
+
+    private GameManager _gameManager;
 
     void Awake()
     {
+        var gameManagerSearch = GameObject.FindGameObjectWithTag(GameManager.Tag);
+        if (gameManagerSearch)
+            _gameManager = gameManagerSearch.GetComponent<GameManager>();
+
+        LoadPreviousScore();
         ActivateLanding();
     }
 
@@ -23,6 +31,12 @@ public class MenuHandler : MonoBehaviour
     {
         landingUI.SetActive(false);
         InstructionUI.SetActive(true);
+    }
+
+    public void LoadPreviousScore()
+    {
+        if (_gameManager)
+            scoreText.text = "◆" + _gameManager.GameScore;
     }
 
     public void ActivateLanding()
